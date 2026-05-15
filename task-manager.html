@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tasks— Your Daily Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  /* ─── CSS Variables ──────────────────────────────── */
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #13161e;
+    --card:      #1b1f2b;
+    --border:    #252a38;
+    --accent:    #f0a500;
+    --accent2:   #ff6b35;
+    --text:      #e8eaf0;
+    --muted:     #6b7280;
+    --success:   #34d399;
+    --danger:    #f87171;
+    --radius:    14px;
+    --shadow:    0 8px 32px rgba(0,0,0,0.45);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated Background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(240,165,0,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 100%, rgba(255,107,53,0.07) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Grid Lines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(240,165,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(240,165,0,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; }
+
+  /* ─── AUTH SCREEN ────────────────────────────────── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .auth-box {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    box-shadow: var(--shadow), 0 0 0 1px rgba(240,165,0,0.05);
+    animation: slideUp 0.5s cubic-bezier(.22,.68,0,1.2) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .brand { text-align: center; margin-bottom: 36px; }
+
+  .brand-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 20px rgba(240,165,0,0.35);
+  }
+
+  .brand h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+
+  .brand p { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+
+  /* Tab Switcher */
+  .tab-switcher {
+    display: flex;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #000;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(240,165,0,0.3);
+  }
+
+  /* Form Fields */
+  .form-group { margin-bottom: 18px; }
+
+  label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(240,165,0,0.12);
+  }
+
+  input::placeholder { color: var(--muted); }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    color: #000;
+    box-shadow: 0 4px 16px rgba(240,165,0,0.3);
+  }
+
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(240,165,0,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+  /* Alert */
+  .alert {
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 18px;
+    animation: fadeIn 0.3s ease;
+    display: none;
+  }
+
+  .alert.show { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .alert-success { background: rgba(52,211,153,0.12); color: var(--success); border: 1px solid rgba(52,211,153,0.25); }
+  .alert-error   { background: rgba(248,113,113,0.12); color: var(--danger);  border: 1px solid rgba(248,113,113,0.25); }
+
+  /* ─── DASHBOARD SCREEN ───────────────────────────── */
+  #dashboard-screen { display: none; min-height: 100vh; }
+
+  /* Top Navigation */
+  .topnav {
+    background: rgba(19,22,30,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 14px 6px 8px;
+  }
+
+  .user-avatar {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #000;
+  }
+
+  .user-name { font-size: 13.5px; font-weight: 500; }
+
+  .logout-btn {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.2);
+    color: var(--danger);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .logout-btn:hover { background: rgba(248,113,113,0.2); }
+
+  /* Dashboard Body */
+  .dash-body {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Stats Bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    animation: slideUp 0.5s ease both;
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.10s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.7px; }
+
+  /* Add Task Card */
+  .add-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 28px;
+    animation: slideUp 0.5s 0.2s ease both;
+  }
+
+  .add-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .add-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  .add-row .form-group { flex: 1; margin: 0; }
+  .add-row .btn { width: auto; padding: 13px 22px; white-space: nowrap; flex-shrink: 0; }
+
+  /* Task List */
+  .tasks-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    animation: slideUp 0.5s 0.25s ease both;
+  }
+
+  .tasks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .tasks-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .refresh-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Empty State */
+  .empty-state { text-align: center; padding: 48px 20px; }
+  .empty-state .empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { color: var(--muted); font-size: 14px; }
+
+  /* Task Items */
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    animation: slideUp 0.3s ease both;
+  }
+
+  .task-item:last-child { border-bottom: none; }
+
+  .task-bullet {
+    width: 8px; height: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(240,165,0,0.4);
+  }
+
+  .task-content { flex: 1; }
+  .task-text { font-size: 15px; line-height: 1.5; }
+
+  .task-id {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-tasks { text-align: center; padding: 36px; color: var(--muted); font-size: 14px; }
+  .loading-tasks .spinner { border-top-color: var(--accent); border-color: rgba(240,165,0,0.2); }
+
+  @media (max-width: 560px) {
+    .auth-box { padding: 36px 24px; }
+    .topnav { padding: 0 16px; }
+    .dash-body { padding: 24px 16px 60px; }
+    .add-row { flex-direction: column; }
+    .add-row .btn { width: 100%; }
+    .stats-bar { gap: 10px; }
+    .stat-num { font-size: 24px; }
+  }
+</style>
+</head>
+<body class="page">
+
+<div id="auth-screen">
+  <div class="auth-box">
+
+    <div class="brand">
+      <div class="brand-icon">✦</div>
+      <h1>Tasks</h1>
+      <p>Organize your day, one task at a time</p>
+    </div>
+
+    <div class="tab-switcher">
+      <button class="tab-btn active" id="tab-login"    onclick="switchTab('login')">Login</button>
+      <button class="tab-btn"        id="tab-register" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div class="alert" id="auth-alert"></div>
+
+    <!-- Login Form -->
+    <div id="login-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" placeholder="Enter your username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password"
+               onkeydown="if(event.key==='Enter') handleLogin()"/>
+      </div>
+      <button class="btn btn-primary" id="login-btn" onclick="handleLogin()">Login to TaskFlow</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" style="display:none;">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="reg-username" placeholder="Choose a username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Choose a strong password"
+               onkeydown="if(event.key==='Enter') handleRegister()"/>
+      </div>
+      <button class="btn btn-primary" id="register-btn" onclick="handleRegister()">Create Account</button>
+    </div>
+
+  </div>
+</div>
+
+
+<div id="dashboard-screen">
+
+  <nav class="topnav">
+    <div class="nav-brand">✦Your Daily Tasks</div>
+    <div class="nav-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar-letter">U</div>
+        <span class="user-name" id="nav-username">User</span>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="dash-body">
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Total Tasks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-today">—</div>
+        <div class="stat-label">Keep Going</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">🔥</div>
+        <div class="stat-label">On a Roll</div>
+      </div>
+    </div>
+
+    <div class="alert" id="dash-alert" style="margin-bottom:20px;"></div>
+
+    <!-- Add Task -->
+    <div class="add-card">
+      <h2><span>✚</span> Add New Task</h2>
+      <div class="add-row">
+        <div class="form-group">
+          <input type="text" id="new-task-input"
+                 placeholder="What do you need to accomplish?"
+                 onkeydown="if(event.key==='Enter') handleAddTask()"/>
+        </div>
+        <button class="btn btn-primary" id="add-task-btn" onclick="handleAddTask()">Add Task</button>
+      </div>
+    </div>
+
+    <!-- Task List -->
+    <div class="tasks-card">
+      <div class="tasks-header">
+        <h2><span>📋</span> My Tasks</h2>
+        <button class="refresh-btn" onclick="loadTasks()">↻ Refresh</button>
+      </div>
+      <div id="task-list">
+        <div class="loading-tasks">
+          <span class="spinner"></span><br/><br/>Loading tasks…
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+const API_BASE = 'http://localhost/API/API';
+
+// ── STATE (stored in localStorage so login persists) ─────
+let authToken   = localStorage.getItem('tf_token') || null;
+let currentUser = localStorage.getItem('tf_user')  || null;
+
+// ── INIT: check if already logged in ─────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (authToken && currentUser) showDashboard();
+});
+
+
+async function apiCall(phpFile, method = 'GET', body = null, needsAuth = false) {
+  const url = `${API_BASE}/${phpFile}`;
+
+  // Step 3a — Build headers
+  const headers = { 'Content-Type': 'application/json' };
+
+  // Step 3b — Attach token for protected routes
+  // PHP reads this with: $headers = getallheaders(); $token = $headers['Authorization'];
+  if (needsAuth && authToken) {
+    headers['Authorization'] = authToken;
+  }
+
+  // Step 3c — Build the fetch options
+  const options = { method, headers };
+
+  // Step 3d — Attach body for POST requests
+  // PHP reads this with: json_decode(file_get_contents("php://input"), true)
+  if (body) {
+    options.body = JSON.stringify(body); // JS object → JSON string
+  }
+
+  // Step 3e — Send the request and wait
+  const response = await fetch(url, options);
+
+  // Step 5 — Parse the JSON that PHP echoed back
+  const data = await response.json();
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════
+//  TAB SWITCHER (Login / Register)
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.getElementById('auth-alert').classList.remove('show');
+  document.getElementById('login-form').style.display    = tab === 'login'    ? '' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('tab-login').classList.toggle('active',    tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+}
+
+// ═══════════════════════════════════════════════════════
+//  REGISTER  →  POST /register.php
+//  Body: { username, password }
+//  PHP returns: { status: "success" } or { status: "error" }
+// ═══════════════════════════════════════════════════════
+async function handleRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value;
+
+  if (!username || !password)  return showAlert('auth-alert', '⚠ Please fill in all fields.');
+  if (password.length < 4)     return showAlert('auth-alert', '⚠ Password must be at least 4 characters.');
+
+  setLoading('register-btn', true);
+  try {
+    const res = await apiCall('register.php', 'POST', { username, password });
+    //   ↑ Sends: POST http://localhost/task-app/register.php
+    //     Body:  {"username":"alice","password":"hashed_by_php"}
+
+    if (res.status === 'success') {
+      showAlert('auth-alert', '✓ Account created! Redirecting to login…', 'success');
+      setTimeout(() => switchTab('login'), 1400);
+    } else {
+      showAlert('auth-alert', '✗ Registration failed. Username may already exist.');
+    }
+  } catch (e) {
+    showAlert('auth-alert', '✗ Could not reach server. Is API_BASE correct?');
+  }
+  setLoading('register-btn', false, 'Create Account');
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOGIN  →  POST /login.php
+//  Body: { username, password }
+//  PHP returns: { status: "success", token: "abc123..." }
+//               or { status: "error" }
+// ═══════════════════════════════════════════════════════
+async function handleLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!username || !password) return showAlert('auth-alert', '⚠ Please fill in all fields.');
+
+  setLoading('login-btn', true);
+  try {
+    const res = await apiCall('login.php', 'POST', { username, password });
+    //   ↑ Sends: POST http://localhost/task-app/login.php
+    //     Body:  {"username":"alice","password":"mypassword"}
+
+    if (res.status === 'success') {
+      // Save token — sent with EVERY future request in the Authorization header
+      authToken   = res.token;
+      currentUser = username;
+      localStorage.setItem('tf_token', authToken);
+      localStorage.setItem('tf_user',  currentUser);
+      showDashboard();
+    } else {
+      showAlert('auth-alert', '✗ Invalid username or password.');
+    }
+  } catch (e) {
+    showAlert('auth-alert', '✗ Could not reach server. Is API_BASE correct?');
+  }
+  setLoading('login-btn', false, 'Login to TaskFlow');
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOGOUT  →  POST /logout.php
+//  Header: Authorization: <token>
+//  No body needed — auth.php reads the header automatically
+// ═══════════════════════════════════════════════════════
+async function handleLogout() {
+  try {
+    await apiCall('logout.php', 'POST', null, true);
+    //   ↑ Sends: POST http://localhost/task-app/logout.php
+    //     Header: Authorization: abc123...
+    //     PHP clears the token in the database
+  } catch (_) { /* ignore network errors — clear local state anyway */ }
+
+  authToken   = null;
+  currentUser = null;
+  localStorage.removeItem('tf_token');
+  localStorage.removeItem('tf_user');
+  showAuthScreen();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADD TASK  →  POST /add_task.php
+//  Header: Authorization: <token>
+//  Body: { task: "Buy groceries" }
+//  PHP returns: { status: "task added" }
+// ═══════════════════════════════════════════════════════
+async function handleAddTask() {
+  const input = document.getElementById('new-task-input');
+  const task  = input.value.trim();
+  if (!task) return input.focus();
+
+  setLoading('add-task-btn', true);
+  try {
+    const res = await apiCall('add_task.php', 'POST', { task }, true);
+    //   ↑ Sends: POST http://localhost/task-app/add_task.php
+    //     Header: Authorization: abc123...
+    //     Body:   {"task":"Buy groceries"}
+
+    if (res.status === 'task added') {
+      input.value = '';
+      showAlert('dash-alert', '✓ Task added successfully!', 'success');
+      loadTasks(); // Refresh the list
+    } else {
+      showAlert('dash-alert', '✗ Failed to add task. Please try again.');
+    }
+  } catch (e) {
+    showAlert('dash-alert', '✗ Server error. Check your connection.');
+  }
+  setLoading('add-task-btn', false, 'Add Task');
+}
+
+// ═══════════════════════════════════════════════════════
+//  GET TASKS  →  GET /get_task.php
+//  Header: Authorization: <token>
+//  No body — GET requests don't have a body
+//  PHP returns: [ { id, user_id, task }, ... ]
+// ═══════════════════════════════════════════════════════
+async function loadTasks() {
+  document.getElementById('task-list').innerHTML =
+    '<div class="loading-tasks"><span class="spinner"></span><br/><br/>Loading tasks…</div>';
+  try {
+    const tasks = await apiCall('get_task.php', 'GET', null, true);
+    //   ↑ Sends: GET http://localhost/task-app/get_task.php
+    //     Header: Authorization: abc123...
+    //     PHP queries: SELECT * FROM tasks WHERE user_id = <current user>
+
+    renderTasks(tasks);
+  } catch (e) {
+    document.getElementById('task-list').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Could not load tasks. Check your server.</p></div>';
+  }
+}
+
+// ── RENDER TASKS ─────────────────────────────────────────
+function renderTasks(tasks) {
+  document.getElementById('stat-total').textContent = tasks.length;
+  document.getElementById('stat-today').textContent = tasks.length > 0 ? '🎯' : '—';
+
+  const listEl = document.getElementById('task-list');
+
+  if (!tasks.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <p>No tasks yet. Add your first task above!</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = tasks.map((t, i) => `
+    <div class="task-item" style="animation-delay:${i * 0.05}s">
+      <div class="task-bullet"></div>
+      <div class="task-content">
+        <div class="task-text">${escapeHtml(t.task)}</div>
+        <div class="task-id">Task #${t.id}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── SCREEN HELPERS ───────────────────────────────────────
+function showDashboard() {
+  document.getElementById('auth-screen').style.display      = 'none';
+  document.getElementById('dashboard-screen').style.display = 'block';
+  document.getElementById('nav-username').textContent       = currentUser || 'User';
+  document.getElementById('user-avatar-letter').textContent = (currentUser || 'U')[0].toUpperCase();
+  loadTasks();
+}
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').style.display      = 'flex';
+  document.getElementById('dashboard-screen').style.display = 'none';
+}
+
+// ── UI HELPERS ───────────────────────────────────────────
+function showAlert(elId, msg, type = 'error') {
+  const el = document.getElementById(elId);
+  el.textContent = msg;
+  el.className = `alert alert-${type} show`;
+  setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+function setLoading(btnId, loading, label = '') {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="spinner"></span>' : label;
+}
+
+// ── XSS PROTECTION ──────────────────────────────────────
+// Always escape user content before injecting into HTML
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(str)));
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
